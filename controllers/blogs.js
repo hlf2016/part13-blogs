@@ -1,22 +1,32 @@
 const router = require('express').Router()
-const { Blog } = require('../models')
-
-const blogFinder = async (req, res, next) => {
-  req.blog = await Blog.findByPk(req.params.id)
-  next()
-}
+const { Blog, User } = require('../models')
+const { tokenExtractor, blogFinder } = require('../util/middleware')
 
 router.get('/', async (req, res) => {
-  const blogs = await Blog.findAll()
+  const blogs = await Blog.findAll({
+    attributes: {
+      exclude: ['userId']
+    },
+    include: {
+      model: User,
+      attributes: ['name']
+    }
+  })
   res.json(blogs)
 })
 
-router.post('/', async (req, res) => {
-  const blog = await Blog.create(req.body)
+router.post('/', tokenExtractor, async (req, res) => {
+  const userId = req.decodedToken.id
+  const user = await User.findByPk(userId)
+
+  const blog = await Blog.create({ ...req.body, userId: user.id })
   res.json(blog)
 })
 
-router.delete('/:id', blogFinder, async (req, res) => {
+router.delete('/:id', blogFinder, tokenExtractor, async (req, res) => {
+  if (req.blog.userId !== req.decodedToken.id) {
+    return res.status(403).json({ error: 'user_id not match' })
+  }
   if (req.blog) {
     await req.blog.destroy()
   }

@@ -6,9 +6,16 @@ require('express-async-errors')
 const { PORT } = require('./util/config')
 const { connectToDatabase } = require('./util/db')
 const blogsRouter = require('./controllers/blogs')
+const usersRouter = require('./controllers/users')
+const loginRouter = require('./controllers/login')
 
 const errorHandler = (error, request, response, next) => {
-  // console.log(error.message)
+  console.log(error)
+  const { name, errors } = error
+  if (name === 'SequelizeValidationError') {
+    const errorMsgs = errors.map(error => error.message)
+    return response.status(400).json({ error: errorMsgs })
+  }
   return response.status(400).json({ error })
   // next(error)
 }
@@ -17,6 +24,10 @@ const errorHandler = (error, request, response, next) => {
 app.use(express.json())
 
 app.use('/api/blogs', blogsRouter)
+
+app.use('/api/users', usersRouter)
+
+app.use('/api/login', loginRouter)
 
 app.use(errorHandler)
 
