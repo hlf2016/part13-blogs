@@ -25,7 +25,18 @@ const blogFinder = async (req, res, next) => {
   next()
 }
 
+const errorHandler = (error, request, response, next) => {
+  const { name, errors } = error
+  if (name === 'SequelizeValidationError') {
+    const errorMsgs = errors.map(error => error.message)
+    return response.status(400).json({ error: errorMsgs })
+  }
+  return response.status(400).json({ error })
+  // next(error)
+}
+
 module.exports = {
   tokenExtractor,
-  blogFinder
+  blogFinder,
+  errorHandler
 }
