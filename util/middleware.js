@@ -25,14 +25,23 @@ const blogFinder = async (req, res, next) => {
   next()
 }
 
-const errorHandler = (error, request, response, next) => {
-  const { name, errors } = error
-  if (name === 'SequelizeValidationError') {
-    const errorMsgs = errors.map(error => error.message)
-    return response.status(400).json({ error: errorMsgs })
+const errorHandler = (error, req, res, next) => {
+  switch (error.name) {
+    case 'SequelizeDatabaseError':
+      return res.status(400).send({ error: error.message })
+    case 'SequelizeValidationError':
+      return res
+        .status(400)
+        .send({ error: error.errors.map((error) => error.message) })
+    case 'SequelizeUniqueConstraintError':
+      return res.status(400).send({
+        error: error.errors.map((error) => error.message),
+      })
+    default:
+      res.status(400).send({ error: error.message })
+      break
   }
-  return response.status(400).json({ error })
-  // next(error)
+  next(error)
 }
 
 module.exports = {

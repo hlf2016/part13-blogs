@@ -24,6 +24,17 @@ Model.init({
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
+  year: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      customValidator(value) {
+        if (value < 1991 || value > new Date().getFullYear()) {
+          throw new Error('Year must be bigger than  or equal to 1991 and smaller than the current year')
+        }
+      }
+    }
+  }
   // 跟 ./index.js 中 Blog.belongsTo(User) 一样的效果 无非是定义看着更加明显些
   // userId: {
   //   type: DataTypes.INTEGER,
@@ -33,7 +44,7 @@ Model.init({
 }, {
   sequelize,
   underscored: true,
-  timestamps: false,
+  timestamps: true,
   modelName: 'blog'
 })
 
