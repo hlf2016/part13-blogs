@@ -10,10 +10,9 @@ const { connectToDatabase } = require('./util/db')
 const blogsRouter = require('./controllers/blogs')
 const usersRouter = require('./controllers/users')
 const loginRouter = require('./controllers/login')
+const readingListRouter = require('./controllers/readingList')
 
 const { Blog } = require('./models')
-
-
 
 // 将 post 提交的数据存放入 req.body 中
 app.use(express.json())
@@ -23,6 +22,8 @@ app.use('/api/blogs', blogsRouter)
 app.use('/api/users', usersRouter)
 
 app.use('/api/login', loginRouter)
+
+app.use('/api/readinglists', readingListRouter)
 
 app.get('/api/authors', async (req, res) => {
   const authors = await Blog.findAll({

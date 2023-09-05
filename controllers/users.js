@@ -1,15 +1,24 @@
 const bcrypt = require('bcrypt')
 const router = require('express').Router()
-const { User, Blog } = require('../models')
+const { User, Blog, Team, ReadingLists } = require('../models')
 const { SALT_ROUNDS } = require('../util/config')
 
 router.get('/', async (req, res) => {
   const users = await User.findAll({
     attributes: { exclude: ['passwordHash'] },
-    include: {
-      model: Blog,
-      attributes: { exclude: ['userId'] }
-    }
+    include: [
+      {
+        model: Blog,
+        attributes: { exclude: ['userId'] }
+      },
+      {
+        model: Team,
+        attributes: ['name', 'id'],
+        through: {
+          attributes: []
+        }
+      }
+    ]
   })
   res.json(users)
 })
@@ -46,6 +55,34 @@ router.put('/:username', async (req, res) => {
   const updatedUser = await user.save()
 
   res.json(updatedUser)
+})
+
+router.get('/:id', async (req, res) => {
+  const where = {}
+  if (req.query.read) {
+    where.has_read = req.query.read
+  }
+  const user = await User.findOne({
+    where: {
+      id: req.params.id
+    },
+    attributes: ['username', 'name'],
+    include: [
+      {
+        model: Blog,
+        as: 'user_readings',
+        attributes: { exclude: ['userId'] },
+        through: {
+          attributes: ['has_read', 'id'],
+          where
+        }
+      }
+    ]
+  })
+  if (!user) {
+    return res.status(404).json({ error: 'User Not Found' })
+  }
+  res.json(user)
 })
 
 
