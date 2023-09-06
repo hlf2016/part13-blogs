@@ -66,7 +66,7 @@ router.get('/:id', async (req, res) => {
     where: {
       id: req.params.id
     },
-    attributes: ['username', 'name'],
+    attributes: ['username', 'name', 'id'],
     include: [
       {
         model: Blog,
@@ -82,7 +82,18 @@ router.get('/:id', async (req, res) => {
   if (!user) {
     return res.status(404).json({ error: 'User Not Found' })
   }
-  res.json(user)
+  // teams 属性的懒加载
+  let teams = undefined
+  if (req.query.teams) {
+    teams = await user.getTeams({
+      attributes: ['name'],
+      joinTableAttributes: []
+    })
+  }
+  // console.log(await user.number_of_blogs())
+  // 静态方法 直接 User 调用
+  // console.log(await User.with_blogs(0))
+  res.json({ ...user.toJSON(), teams })
 })
 
 
