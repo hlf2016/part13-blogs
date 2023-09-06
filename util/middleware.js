@@ -1,12 +1,34 @@
 const jwt = require('jsonwebtoken')
 const { JWT_SECRET } = require('../util/config')
-const { Blog } = require('../models/index')
+const { Blog, Session, User } = require('../models/index')
 
-const tokenExtractor = (req, res, next) => {
+const tokenExtractor = async (req, res, next) => {
   const authorization = req.get('authorization')
   if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
     try {
-      req.decodedToken = jwt.verify(authorization.substring(7), JWT_SECRET)
+      const token = authorization.substring(7)
+      const decodedToken = jwt.verify(token, JWT_SECRET)
+      console.log(decodedToken)
+      const user = await User.findOne({
+        where: {
+          id: decodedToken.id
+        }
+      })
+      if (!user || user.disabled) {
+        return res.status(401).json({
+          error: 'account disabled , please contact admin'
+        })
+      }
+      const session = await Session.findOne({
+        where: {
+          userId: decodedToken.id,
+          token
+        }
+      })
+      if (!session) {
+        return res.status(401).json({ error: 'token invalid' })
+      }
+      req.decodedToken = decodedToken
     } catch {
       return res.status(401).json({ error: 'token invalid' })
     }

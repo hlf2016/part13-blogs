@@ -3,7 +3,7 @@ const { sequelize } = require('../util/db')
 
 class Blog extends Model { }
 
-Model.init({
+Blog.init({
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
